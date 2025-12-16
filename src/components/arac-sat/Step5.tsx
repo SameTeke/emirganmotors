@@ -936,10 +936,7 @@ export default function Step5({ value, errors, onChange, onPrev, onValidate, off
       'Şefaatli',
       'Yenifakılı'
     ],
-    Zonguldak: ['Merkez', 'Ereğli', 'Çaycuma', 'Devrek', 'Alaplı', 'Gökçebey', 'Kilimli', 'Kozlu'],
-    // Missing districts default empty
-    'Karabük': ['Merkez', 'Safranbolu', 'Eskipazar', 'Ovacık', 'Yenice', 'Eflani'],
-    'Kilis': ['Merkez', 'Elbeyli', 'Musabeyli', 'Polateli']
+    Zonguldak: ['Merkez', 'Ereğli', 'Çaycuma', 'Devrek', 'Alaplı', 'Gökçebey', 'Kilimli', 'Kozlu']
   };
 
   const plainCity = (city: string) => city.replace(/^\d+\s+/, '');

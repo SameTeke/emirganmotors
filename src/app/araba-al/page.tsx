@@ -2,11 +2,19 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export default function ArabaAlPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-600">Yükleniyor...</div>}>
+      <ArabaAlInner />
+    </Suspense>
+  );
+}
+
+function ArabaAlInner() {
   type Listing = {
     id: number;
     title: string;

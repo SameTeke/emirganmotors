@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
@@ -61,6 +61,14 @@ function formatPhone(value: string) {
 }
 
 export default function MotosikletSatPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-600">Yükleniyor...</div>}>
+      <MotosikletSatInner />
+    </Suspense>
+  );
+}
+
+function MotosikletSatInner() {
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitted, setSubmitted] = useState(false);

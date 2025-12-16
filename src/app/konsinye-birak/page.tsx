@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -47,6 +47,14 @@ const initialStep3: Step3State = {
 };
 
 export default function KonsinyeBirakPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-600">Yükleniyor...</div>}>
+      <KonsinyeBirakInner />
+    </Suspense>
+  );
+}
+
+function KonsinyeBirakInner() {
   const searchParams = useSearchParams();
   const [activeStep, setActiveStep] = useState(1);
 

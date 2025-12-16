@@ -45,7 +45,10 @@ function CarSvg({ statuses }: { statuses: Step3State }) {
   const fillFor = (id: string) => {
     const match = parts.find((p) => p.id === id);
     const status = match ? statuses[match.name] : undefined;
-    return status ? colorMap[status] ?? '#e5e7eb' : '#e5e7eb';
+    if (typeof status === 'number') {
+      return colorMap[status] ?? '#e5e7eb';
+    }
+    return '#e5e7eb';
   };
 
   const overlays = [

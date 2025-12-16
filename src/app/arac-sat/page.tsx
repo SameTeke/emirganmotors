@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -46,6 +46,14 @@ const initialStep3: Step3State = {
 };
 
 export default function AracSatPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-600">Yükleniyor...</div>}>
+      <AracSatInner />
+    </Suspense>
+  );
+}
+
+function AracSatInner() {
   const searchParams = useSearchParams();
   const [activeStep, setActiveStep] = useState(1);
 
@@ -117,8 +125,8 @@ export default function AracSatPage() {
     });
   };
 
-  const handleStep3Change = (part: string, value: number) => {
-    setStep3((prev) => ({ ...prev, [part]: value }));
+  const handleStep3Change = (part: string, status: number | string | boolean) => {
+    setStep3((prev) => ({ ...prev, [part]: status }));
   };
 
   const handleStep4Change = (field: keyof Step4State, value: string) => {

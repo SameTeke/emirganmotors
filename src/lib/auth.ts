@@ -26,7 +26,14 @@ export function signAdminToken(payload: AdminTokenPayload) {
 
 export function verifyAdminToken(token: string): AdminTokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as AdminTokenPayload;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || typeof decoded !== 'object') return null;
+    const anyDecoded = decoded as Record<string, unknown>;
+    const sub = anyDecoded.sub;
+    const email = anyDecoded.email;
+    if (typeof sub !== 'number') return null;
+    if (typeof email !== 'string') return null;
+    return { sub, email };
   } catch {
     return null;
   }
