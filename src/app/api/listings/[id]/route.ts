@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 
 type Params = { params: { id: string } };
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_: Request, { params }: Params) {
   const id = Number(params.id);
   const listing = await prisma.listing.findUnique({
