@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ListingStatus {
+  draft
+  published
+}
+
+enum ContentType {
+  text
+  image
+  json
+}
+
+enum SubmissionStatus {
+  pending
+  processed
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Listing {
+  id              Int             @id @default(autoincrement())
+  brand           String
+  model           String
+  price           Int
+  year            Int
+  city            String
+  fuelType        String
+  transmission    String
+  mileage         Int
+  bodyType        String
+  color           String
+  paintDamageInfo Json?
+  replacedParts   String?
+  tramerHasRecord Boolean         @default(false)
+  tramerAmount    Int?
+  heavyDamage     Boolean         @default(false)
+  status          ListingStatus   @default(draft)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  images          ListingImage[]
+}
+
+model ListingImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId Int
+}
+
+model ContentEntry {
+  id      Int         @id @default(autoincrement())
+  page    String
+  key     String
+  type    ContentType
+  value   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([page, key])
+}
+
+model FormSubmission {
+  id        Int              @id @default(autoincrement())
+  formType  String
+  phone     String
+  data      Json
+  status    SubmissionStatus @default(pending)
+  adminNote String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
