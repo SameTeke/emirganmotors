@@ -219,32 +219,34 @@ function AracSatInner() {
 
       <section className="bg-white">
         <div className="mx-auto max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-10 xl:px-12">
-          {/* Stepper */}
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            {steps.map((label, idx) => {
-              const stepNum = idx + 1;
-              const active = stepNum === activeStep;
-              const done = stepNum < activeStep;
-              return (
-                <div key={label} className="flex min-w-[200px] flex-1 items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold ${
-                      active
-                        ? 'border-primary bg-primary text-white'
-                        : done
-                          ? 'border-primary text-primary'
-                          : 'border-slate-300 text-slate-500'
-                    }`}
-                  >
-                    {stepNum}
+          {/* Stepper (mobilde yatay kaydırılabilir) */}
+          <div className="-mx-4 mb-8 overflow-x-auto px-4 pb-2">
+            <div className="flex flex-nowrap items-center gap-4 sm:flex-wrap sm:justify-between">
+              {steps.map((label, idx) => {
+                const stepNum = idx + 1;
+                const active = stepNum === activeStep;
+                const done = stepNum < activeStep;
+                return (
+                  <div key={label} className="flex min-w-[220px] shrink-0 items-center gap-3 sm:min-w-[200px] sm:flex-1">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold ${
+                        active
+                          ? 'border-primary bg-primary text-white'
+                          : done
+                            ? 'border-primary text-primary'
+                            : 'border-slate-300 text-slate-500'
+                      }`}
+                    >
+                      {stepNum}
+                    </div>
+                    <div className="flex-1 text-sm font-semibold text-slate-800">{label}</div>
+                    {stepNum < steps.length && (
+                      <div className="hidden flex-1 border-t border-dashed border-slate-200 sm:block" />
+                    )}
                   </div>
-                  <div className="flex-1 text-sm font-semibold text-slate-800">{label}</div>
-                  {stepNum < steps.length && (
-                    <div className="hidden flex-1 border-t border-dashed border-slate-200 sm:block" />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-7">

@@ -25,9 +25,6 @@ export default function Footer() {
             <Link href="/hakkimizda" className="block transition hover:text-primary">
               Hakkımızda
             </Link>
-            <Link href="/turuncu-etik-hatti" className="block transition hover:text-primary">
-              Turuncu Etik Hattı
-            </Link>
           </div>
 
           <div className={columnClasses}>
@@ -48,9 +45,6 @@ export default function Footer() {
             <Link href="/cerez-politikasi" className="block transition hover:text-primary">
               Çerez Politikası
             </Link>
-            <Link href="/bilgi-toplumu-hizmetleri" className="block transition hover:text-primary">
-              Bilgi Toplumu Hizmetleri
-            </Link>
           </div>
 
           <div className={columnClasses}>
@@ -64,16 +58,13 @@ export default function Footer() {
             <Link href="/sss" className="block transition hover:text-primary">
               Sıkça Sorulan Sorular
             </Link>
-            <Link href="/islem-rehberi" className="block transition hover:text-primary">
-              İşlem Rehberi
-            </Link>
           </div>
         </div>
 
         <div className="mt-10 border-t border-slate-800 pt-8 text-sm text-gray-300">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-base font-semibold text-white">Borusan Next</div>
+              <div className="text-base font-semibold text-white">Emirgan Motors A.Ş.</div>
               <p className="mt-1 text-gray-400">
                 Copyright © 2025 — Tüm hakları saklıdır.
               </p>

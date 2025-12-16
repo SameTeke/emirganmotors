@@ -25,8 +25,8 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center" onClick={closeMenu}>
           <Image
-            src="/images/logo.png"
-            alt="Hizmet Adı"
+            src="/images/emirganLogo.png"
+            alt="Emirgan Motors A.Ş."
             width={140}
             height={40}
             className="h-10 w-auto"
@@ -44,8 +44,10 @@ export default function Header() {
         </button>
 
         <nav
-          className={`absolute left-0 right-0 top-full mx-4 mt-2 origin-top rounded-2xl bg-white p-4 shadow-xl ring-1 ring-slate-200 transition ${
-            open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'pointer-events-none opacity-0 -translate-y-2'
+          className={`absolute left-0 right-0 top-full mx-4 mt-2 origin-top rounded-2xl bg-white p-4 shadow-xl ring-1 ring-slate-200 transition-[transform,opacity] duration-200 ease-out will-change-transform ${
+            open
+              ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+              : 'pointer-events-none opacity-0 -translate-y-2 scale-[0.98]'
           } md:static md:mx-0 md:mt-0 md:flex md:items-center md:gap-4 md:bg-transparent md:p-0 md:opacity-100 md:translate-y-0 md:shadow-none md:ring-0 md:pointer-events-auto`}
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 lg:gap-6">

@@ -23,7 +23,7 @@ export default function KariyerPage() {
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Kariyer Olanakları</h1>
           <p className="text-sm text-slate-600">
-            Borusan Grubu’na gösterdiğiniz ilgiye teşekkür ederiz. (Örnek metin)
+            Emirgan Motors A.Ş.’ye gösterdiğiniz ilgiye teşekkür ederiz. (Örnek metin)
           </p>
         </div>
 
@@ -47,9 +47,9 @@ export default function KariyerPage() {
           {/* Content */}
           <article className="prose prose-slate max-w-none rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p>
-              Borusan Grubu’na gösterdiğiniz ilgiye çok teşekkür ederiz. Kişisel Verilerin Koruması Kanunu gereğince aday
+              Emirgan Motors A.Ş.’ye gösterdiğiniz ilgiye çok teşekkür ederiz. Kişisel Verilerin Koruması Kanunu gereğince aday
               özgeçmişlerini mail yerine ilgili platformlar üzerinden toplamaya özen gösteriyoruz. Tüm grup
-              şirketlerimizin açık pozisyonlarına, Alpha Genç Yetenek ve Staj Programlarımıza, Borusan Grubu ve
+              şirketlerimizin açık pozisyonlarına, Alpha Genç Yetenek ve Staj Programlarımıza, Emirgan Motors A.Ş. ve
               şirketlerimiz hakkında detaylı bilgilere Kariyer Sitemizden ulaşabilirsiniz.
             </p>
             <p>

@@ -3,8 +3,15 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Hızlı Araç Satış Lead Sitesi',
-  description: 'Hızlı, responsive araç satış lead toplama web sitesi.'
+  title: 'Emirgan Motors A.Ş.',
+  description: 'Emirgan Motors A.Ş. — Hızlı, şeffaf ve güvenli satış süreci.'
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
