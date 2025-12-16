@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 const toEmail = 'sssametcanteke@gmail.com';
 
