@@ -33,6 +33,7 @@ const requiredParts = [
 const shasiKeys = ['shasi-Sol Ön Şasi', 'shasi-Sağ Ön Şasi', 'shasi-Sol Arka Şasi', 'shasi-Sağ Arka Şasi'];
 
 const steps = ['Araç Bilgileri', 'Kaporta Durumu', 'Araç Rengi & İlan', 'Konum'];
+const stepsShort = ['Araç', 'Kaporta', 'Renk/İlan', 'Konum'];
 
 const initialStep3: Step3State = {
   ...requiredParts.reduce<Record<string, number>>((acc, part) => {
@@ -219,15 +220,43 @@ function AracSatInner() {
 
       <section className="bg-white">
         <div className="mx-auto max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-10 xl:px-12">
-          {/* Stepper (mobilde yatay kaydırılabilir) */}
-          <div className="-mx-4 mb-8 overflow-x-auto px-4 pb-2">
-            <div className="flex flex-nowrap items-center gap-4 sm:flex-wrap sm:justify-between">
+          {/* Stepper */}
+          <div className="mb-8">
+            {/* Mobil: tüm adımlar tek satırda görünür (kompakt) */}
+            <div className="grid grid-cols-4 gap-2 sm:hidden">
+              {stepsShort.map((label, idx) => {
+                const stepNum = idx + 1;
+                const active = stepNum === activeStep;
+                const done = stepNum < activeStep;
+                return (
+                  <div key={label} className="flex flex-col items-center gap-1 text-center">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold ${
+                        active
+                          ? 'border-primary bg-primary text-white'
+                          : done
+                            ? 'border-primary text-primary'
+                            : 'border-slate-300 text-slate-500'
+                      }`}
+                    >
+                      {stepNum}
+                    </div>
+                    <div className={`text-[11px] font-semibold leading-tight ${active ? 'text-slate-900' : 'text-slate-700'}`}>
+                      {label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Masaüstü: eski geniş stepper */}
+            <div className="hidden items-center justify-between gap-4 sm:flex sm:flex-wrap">
               {steps.map((label, idx) => {
                 const stepNum = idx + 1;
                 const active = stepNum === activeStep;
                 const done = stepNum < activeStep;
                 return (
-                  <div key={label} className="flex min-w-[220px] shrink-0 items-center gap-3 sm:min-w-[200px] sm:flex-1">
+                  <div key={label} className="flex min-w-[200px] flex-1 items-center gap-3">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold ${
                         active
