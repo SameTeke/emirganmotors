@@ -58,7 +58,7 @@ export default function BlogPage() {
     const q = query.trim().toLowerCase();
     if (!q) return posts;
     return posts.filter((p) => p.title.toLowerCase().includes(q));
-  }, [query]);
+  }, [query, posts]);
 
   const latestPosts = posts.slice(0, 3);
   const popularPosts = posts.slice(3, 6);
