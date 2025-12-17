@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Listing, ListingStatus } from '@prisma/client';
 
 type ListingWithImages = Listing & { images: { id: number; url: string }[] };
@@ -51,6 +51,13 @@ const kaportaStatusOptions = [
   { value: 4, label: 'Değişen' }
 ];
 
+const kaportaStatusBadge: Record<number, string> = {
+  1: 'bg-slate-100 text-slate-800',
+  2: 'bg-amber-100 text-amber-800',
+  3: 'bg-blue-100 text-blue-800',
+  4: 'bg-red-100 text-red-800'
+};
+
 const buildDefaultKaporta = () => {
   const obj: Record<string, any> = {};
   kaportaParts.forEach((p) => (obj[p] = 1));
@@ -86,6 +93,10 @@ export default function AdminListingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
+  const [tab, setTab] = useState<'genel' | 'medya' | 'kaporta'>('genel');
+
   const load = async () => {
     setLoading(true);
     const res = await fetch('/api/admin/listings');
@@ -97,6 +108,12 @@ export default function AdminListingsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const resetAll = () => {
+    setForm(emptyForm);
+    setError(null);
+    setTab('genel');
+  };
 
   const startEdit = (item: ListingWithImages) => {
     setForm({
@@ -121,11 +138,20 @@ export default function AdminListingsPage() {
     });
   };
 
-  const resetForm = () => setForm(emptyForm);
+  const filteredListings = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return listings.filter((l) => {
+      if (statusFilter !== 'all' && l.status !== statusFilter) return false;
+      if (!q) return true;
+      const hay = `${l.brand} ${l.model} ${l.year} ${l.city}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [listings, query, statusFilter]);
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
+
     const payload: any = {
       brand: form.brand,
       model: form.model,
@@ -152,7 +178,6 @@ export default function AdminListingsPage() {
 
     const method = form.id ? 'PUT' : 'POST';
     const url = form.id ? `/api/admin/listings/${form.id}` : '/api/admin/listings';
-
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -166,19 +191,16 @@ export default function AdminListingsPage() {
       return;
     }
 
-    const { id } = await res.json();
+    const out = await res.json().catch(() => ({}));
+    const id = form.id || out?.id;
 
-    // upload images if any
-    if (form.imageFiles.length) {
+    if (form.imageFiles.length && id) {
       const fd = new FormData();
       form.imageFiles.forEach((f) => fd.append('files', f));
-      await fetch(`/api/admin/listings/${form.id || id}/images`, {
-        method: 'POST',
-        body: fd
-      });
+      await fetch(`/api/admin/listings/${id}/images`, { method: 'POST', body: fd });
     }
 
-    resetForm();
+    resetAll();
     await load();
     setSaving(false);
   };
@@ -187,338 +209,500 @@ export default function AdminListingsPage() {
     if (!confirm('Silinsin mi?')) return;
     await fetch(`/api/admin/listings/${id}`, { method: 'DELETE' });
     await load();
-    if (form.id === id) resetForm();
+    if (form.id === id) resetAll();
   };
 
+  const activeId = form.id || null;
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-slate-900">İlanlar</h2>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Yeni
-          </button>
-        </div>
-        {loading ? (
-          <p className="text-sm text-slate-600">Yükleniyor...</p>
-        ) : (
-          <div className="space-y-2">
-            {listings.map((l) => (
-              <div
-                key={l.id}
-                className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
-              >
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">
-                    {l.brand} {l.model} ({l.year})
-                  </div>
-                  <div className="text-xs text-slate-600">
-                    {l.city} · {l.fuelType} · {l.transmission} · {l.mileage.toLocaleString('tr-TR')} km
-                  </div>
-                  <div className="text-xs font-semibold text-primary mt-1">{l.price.toLocaleString('tr-TR')} ₺ — {l.status}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(l)}
-                    className="rounded border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700"
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(l.id)}
-                    className="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-600"
-                  >
-                    Sil
-                  </button>
-                </div>
-              </div>
-            ))}
+    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      {/* Liste */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">İlanlar</h2>
+            <p className="text-xs text-slate-500">
+              Toplam: {listings.length} · Gösterilen: {filteredListings.length}
+            </p>
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={resetAll}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Yeni İlan
+            </button>
+            <button
+              type="button"
+              onClick={load}
+              className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Yenile
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ara: marka, model, yıl, şehir..."
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <div className="flex items-center gap-2">
+              {[
+                { key: 'all', label: 'Tümü' },
+                { key: 'published', label: 'Yayında' },
+                { key: 'draft', label: 'Taslak' }
+              ].map((x) => {
+                const active = statusFilter === (x.key as any);
+                return (
+                  <button
+                    key={x.key}
+                    type="button"
+                    onClick={() => setStatusFilter(x.key as any)}
+                    className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                      active
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {x.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-h-[calc(100vh-230px)] overflow-auto">
+          {loading ? (
+            <div className="p-4 text-sm text-slate-600">Yükleniyor...</div>
+          ) : filteredListings.length === 0 ? (
+            <div className="p-4 text-sm text-slate-600">Kayıt bulunamadı.</div>
+          ) : (
+            <div className="divide-y divide-slate-200">
+              {filteredListings.map((l) => {
+                const isActive = activeId === l.id;
+                return (
+                  <div key={l.id} className={`flex items-center gap-3 px-4 py-3 ${isActive ? 'bg-primary/5' : 'hover:bg-slate-50'}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        startEdit(l);
+                        setTab('genel');
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-sm font-semibold text-slate-900">
+                          {l.brand} {l.model}
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{l.year}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            l.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {l.status === 'published' ? 'Yayında' : 'Taslak'}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                        <span>{l.city}</span>
+                        <span>·</span>
+                        <span>{l.fuelType}</span>
+                        <span>·</span>
+                        <span>{l.transmission}</span>
+                        <span>·</span>
+                        <span>{l.mileage.toLocaleString('tr-TR')} km</span>
+                      </div>
+                      <div className="mt-1 text-sm font-extrabold text-primary">{l.price.toLocaleString('tr-TR')} ₺</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(l.id)}
+                      className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
-        <h3 className="text-lg font-semibold text-slate-900">{form.id ? 'İlanı Düzenle' : 'Yeni İlan'}</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Marka</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.brand}
-              onChange={(e) => setForm({ ...form, brand: e.target.value, model: '' })}
-            >
-              <option value="">Seçiniz</option>
-              {brandOptions.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Model</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.model}
-              onChange={(e) => setForm({ ...form, model: e.target.value })}
-              disabled={!form.brand}
-            >
-              <option value="">Seçiniz</option>
-              {(modelOptions[form.brand] || []).map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Fiyat</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              type="number"
-              placeholder="Fiyat"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Yıl</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.year}
-              onChange={(e) => setForm({ ...form, year: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Şehir</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {cityOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Yakıt</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.fuelType}
-              onChange={(e) => setForm({ ...form, fuelType: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {fuelOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Vites</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.transmission}
-              onChange={(e) => setForm({ ...form, transmission: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {transmissionOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Kilometre</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              type="number"
-              placeholder="Kilometre"
-              value={form.mileage}
-              onChange={(e) => setForm({ ...form, mileage: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Kasa Tipi</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.bodyType}
-              onChange={(e) => setForm({ ...form, bodyType: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {bodyOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Renk</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.color}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-            >
-              <option value="">Seçiniz</option>
-              {colorOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <input
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            type="number"
-            placeholder="Tramer Tutarı"
-            value={form.tramerAmount}
-            onChange={(e) => setForm({ ...form, tramerAmount: e.target.value })}
-            style={{ display: form.tramerHasRecord ? 'block' : 'none' }}
-          />
-          <div className="flex items-center gap-2 text-sm text-slate-700">
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={form.tramerHasRecord}
-                onChange={(e) => setForm({ ...form, tramerHasRecord: e.target.checked })}
-              />
-              Tramer Kaydı Var
-            </label>
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={form.heavyDamage}
-                onChange={(e) => setForm({ ...form, heavyDamage: e.target.checked })}
-              />
-              Ağır Hasar Var
-            </label>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Durum</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as ListingStatus })}
-            >
-              <option value="draft">Taslak</option>
-              <option value="published">Yayında</option>
-            </select>
-          </div>
-          <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-semibold text-slate-700">Görseller</label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => setForm({ ...form, imageFiles: Array.from(e.target.files || []) })}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            {form.existingImages.length ? (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {form.existingImages.map((img) => (
-                  <img key={img.id} src={img.url} alt="" className="h-16 w-20 rounded border object-cover" />
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="mb-2 text-sm font-semibold text-slate-900">Kaporta Durumu</div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {kaportaParts.map((part) => (
-                <div key={part} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <div className="text-xs font-semibold text-slate-800">{part}</div>
-                  <select
-                    value={Number((form.paintDamageInfo as any)?.[part] ?? 1)}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        paintDamageInfo: { ...(prev.paintDamageInfo as any), [part]: Number(e.target.value) }
-                      }))
-                    }
-                    className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-800"
-                  >
-                    {kaportaStatusOptions.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+      {/* Form */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm xl:sticky xl:top-20">
+        <div className="border-b border-slate-200 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">{form.id ? 'İlanı Düzenle' : 'Yeni İlan'}</h3>
+              <p className="text-xs text-slate-500">{form.id ? `ID: ${form.id}` : 'Yeni kayıt oluşturun.'}</p>
             </div>
+          </div>
 
-            <div className="mt-3">
-              <div className="mb-2 text-sm font-semibold text-slate-900">Şasi Bilgisi</div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {shasiKeys.map((key) => {
-                  const label = key.replace('shasi-', '');
+          <div className="mt-3 flex gap-2">
+            {[
+              { key: 'genel', label: 'Genel' },
+              { key: 'medya', label: 'Medya' },
+              { key: 'kaporta', label: 'Kaporta' }
+            ].map((t) => {
+              const active = tab === (t.key as any);
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setTab(t.key as any)}
+                  className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                    active ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-4">
+          {tab === 'genel' ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Marka</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.brand}
+                  onChange={(e) => setForm({ ...form, brand: e.target.value, model: '' })}
+                >
+                  <option value="">Seçiniz</option>
+                  {brandOptions.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Model</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.model}
+                  onChange={(e) => setForm({ ...form, model: e.target.value })}
+                  disabled={!form.brand}
+                >
+                  <option value="">Seçiniz</option>
+                  {(modelOptions[form.brand] || []).map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Fiyat</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  type="number"
+                  placeholder="Fiyat"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Yıl</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Şehir</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {cityOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Yakıt</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.fuelType}
+                  onChange={(e) => setForm({ ...form, fuelType: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {fuelOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Vites</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.transmission}
+                  onChange={(e) => setForm({ ...form, transmission: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {transmissionOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Kilometre</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  type="number"
+                  placeholder="Kilometre"
+                  value={form.mileage}
+                  onChange={(e) => setForm({ ...form, mileage: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Kasa Tipi</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.bodyType}
+                  onChange={(e) => setForm({ ...form, bodyType: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {bodyOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Renk</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  {colorOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={form.tramerHasRecord}
+                      onChange={(e) => setForm({ ...form, tramerHasRecord: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/40"
+                    />
+                    Tramer Kaydı Var
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <input
+                      type="checkbox"
+                      checked={form.heavyDamage}
+                      onChange={(e) => setForm({ ...form, heavyDamage: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/40"
+                    />
+                    Ağır Hasar Var
+                  </label>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {form.tramerHasRecord ? (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700">Tramer Tutarı</label>
+                      <input
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        type="number"
+                        placeholder="Tramer Tutarı"
+                        value={form.tramerAmount}
+                        onChange={(e) => setForm({ ...form, tramerAmount: e.target.value })}
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-slate-300 p-3 text-xs text-slate-500">
+                      Tramer kaydı yoksa tutar alanı gizli kalır.
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-700">Durum</label>
+                    <select
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value as ListingStatus })}
+                    >
+                      <option value="draft">Taslak</option>
+                      <option value="published">Yayında</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {tab === 'medya' ? (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">Görseller</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => setForm({ ...form, imageFiles: Array.from(e.target.files || []) })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-xs text-slate-500">Kaydet’e bastıktan sonra yeni görseller yüklenir.</p>
+              </div>
+              {form.existingImages.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {form.existingImages.map((img) => (
+                    <img key={img.id} src={img.url} alt="" className="h-20 w-28 rounded-xl border object-cover" />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">Henüz görsel yok.</div>
+              )}
+            </div>
+          ) : null}
+
+          {tab === 'kaporta' ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-700">Toplu seçim:</span>
+                {kaportaStatusOptions.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() =>
+                      setForm((p) => {
+                        const next = { ...(p.paintDamageInfo as any) };
+                        kaportaParts.forEach((pt) => (next[pt] = o.value));
+                        return { ...p, paintDamageInfo: next };
+                      })
+                    }
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    {o.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, paintDamageInfo: buildDefaultKaporta() as any }))}
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  Sıfırla
+                </button>
+              </div>
+
+              <div className="grid gap-2">
+                {kaportaParts.map((part) => {
+                  const val = Number((form.paintDamageInfo as any)?.[part] ?? 1);
                   return (
-                    <div key={key} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <div className="text-xs font-semibold text-slate-800">{label}</div>
-                      <select
-                        value={String((form.paintDamageInfo as any)?.[key] ?? 'yok')}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            paintDamageInfo: { ...(prev.paintDamageInfo as any), [key]: e.target.value }
-                          }))
-                        }
-                        className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-800"
-                      >
-                        <option value="yok">İşlem Yok</option>
-                        <option value="var">İşlem Var</option>
-                      </select>
+                    <div key={part} className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3">
+                      <div className="text-sm font-semibold text-slate-800">{part}</div>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${kaportaStatusBadge[val] ?? 'bg-slate-100 text-slate-700'}`}>
+                          {kaportaStatusOptions.find((x) => x.value === val)?.label ?? '—'}
+                        </span>
+                        <select
+                          value={val}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              paintDamageInfo: { ...(prev.paintDamageInfo as any), [part]: Number(e.target.value) }
+                            }))
+                          }
+                          className="rounded-lg border border-slate-200 px-2 py-2 text-sm font-semibold text-slate-800"
+                        >
+                          {kaportaStatusOptions.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   );
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setForm((p) => ({ ...p, paintDamageInfo: buildDefaultKaporta() as any }))}
-                className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Kaportayı Orijinal Yap / Şasiyi İşlem Yok
-              </button>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-900">Şasi Bilgisi</div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {shasiKeys.map((key) => {
+                    const label = key.replace('shasi-', '');
+                    const v = String((form.paintDamageInfo as any)?.[key] ?? 'yok');
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3">
+                        <div className="text-sm font-semibold text-slate-800">{label}</div>
+                        <select
+                          value={v}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              paintDamageInfo: { ...(prev.paintDamageInfo as any), [key]: e.target.value }
+                            }))
+                          }
+                          className="rounded-lg border border-slate-200 px-2 py-2 text-sm font-semibold text-slate-800"
+                        >
+                          <option value="yok">İşlem Yok</option>
+                          <option value="var">İşlem Var</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:-translate-y-0.5 hover:shadow transition"
-            disabled={saving}
-          >
-            {saving ? 'Kaydediliyor...' : 'Kaydet'}
-          </button>
-          {form.id ? (
-            <button type="button" onClick={resetForm} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
-              İptal
-            </button>
           ) : null}
+
+          {error ? <p className="mt-3 text-sm font-semibold text-red-600">{error}</p> : null}
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow disabled:opacity-60"
+              disabled={saving}
+            >
+              {saving ? 'Kaydediliyor...' : 'Kaydet'}
+            </button>
+            <button
+              type="button"
+              onClick={resetAll}
+              className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              disabled={saving}
+            >
+              Temizle
+            </button>
+          </div>
         </div>
       </div>
     </div>
