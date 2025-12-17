@@ -30,6 +30,7 @@ export async function PUT(req: Request, { params }: Params) {
         mileage: data.mileage,
         bodyType: data.bodyType,
         color: data.color,
+        paintDamageInfo: data.paintDamageInfo ?? null,
         tramerHasRecord: data.tramerHasRecord ?? false,
         tramerAmount: data.tramerAmount ?? null,
         heavyDamage: data.heavyDamage ?? false,

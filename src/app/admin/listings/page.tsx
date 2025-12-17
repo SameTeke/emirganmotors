@@ -26,6 +26,38 @@ const transmissionOptions = ['Manuel', 'Otomatik', 'Yarı Otomatik', 'CVT'];
 const bodyOptions = ['Sedan', 'Hatchback', 'SUV', 'Coupé', 'Station Wagon', 'MPV', 'Pickup'];
 const colorOptions = ['Beyaz', 'Siyah', 'Gri', 'Kırmızı', 'Mavi', 'Yeşil', 'Turuncu', 'Lacivert'];
 
+const kaportaParts = [
+  'Sol Ön Çamurluk',
+  'Sağ Ön Çamurluk',
+  'Sol Ön Kapı',
+  'Sağ Ön Kapı',
+  'Sol Arka Kapı',
+  'Sağ Arka Kapı',
+  'Sol Arka Çamurluk',
+  'Sağ Arka Çamurluk',
+  'Motor Kaputu',
+  'Bagaj',
+  'Tavan',
+  'Ön Tampon',
+  'Arka Tampon'
+];
+
+const shasiKeys = ['shasi-Sol Ön Şasi', 'shasi-Sağ Ön Şasi', 'shasi-Sol Arka Şasi', 'shasi-Sağ Arka Şasi'] as const;
+
+const kaportaStatusOptions = [
+  { value: 1, label: 'Orijinal' },
+  { value: 2, label: 'Lokal Boyalı' },
+  { value: 3, label: 'Boyalı' },
+  { value: 4, label: 'Değişen' }
+];
+
+const buildDefaultKaporta = () => {
+  const obj: Record<string, any> = {};
+  kaportaParts.forEach((p) => (obj[p] = 1));
+  shasiKeys.forEach((k) => (obj[k] = 'yok'));
+  return obj;
+};
+
 const emptyForm = {
   id: 0,
   brand: '',
@@ -38,6 +70,7 @@ const emptyForm = {
   mileage: '',
   bodyType: '',
   color: '',
+  paintDamageInfo: buildDefaultKaporta() as any,
   tramerHasRecord: false,
   tramerAmount: '',
   heavyDamage: false,
@@ -79,6 +112,7 @@ export default function AdminListingsPage() {
       mileage: String(item.mileage),
       bodyType: item.bodyType,
       color: item.color,
+      paintDamageInfo: (item as any).paintDamageInfo ? (item as any).paintDamageInfo : buildDefaultKaporta(),
       tramerHasRecord: item.tramerHasRecord,
       tramerAmount: item.tramerAmount ? String(item.tramerAmount) : '',
       heavyDamage: item.heavyDamage,
@@ -103,6 +137,7 @@ export default function AdminListingsPage() {
       mileage: Number(form.mileage),
       bodyType: form.bodyType,
       color: form.color,
+      paintDamageInfo: form.paintDamageInfo ?? null,
       tramerHasRecord: form.tramerHasRecord,
       tramerAmount: form.tramerAmount ? Number(form.tramerAmount) : null,
       heavyDamage: form.heavyDamage,
@@ -405,6 +440,68 @@ export default function AdminListingsPage() {
                 ))}
               </div>
             ) : null}
+          </div>
+
+          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-semibold text-slate-900">Kaporta Durumu</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {kaportaParts.map((part) => (
+                <div key={part} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-xs font-semibold text-slate-800">{part}</div>
+                  <select
+                    value={Number((form.paintDamageInfo as any)?.[part] ?? 1)}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        paintDamageInfo: { ...(prev.paintDamageInfo as any), [part]: Number(e.target.value) }
+                      }))
+                    }
+                    className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-800"
+                  >
+                    {kaportaStatusOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3">
+              <div className="mb-2 text-sm font-semibold text-slate-900">Şasi Bilgisi</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {shasiKeys.map((key) => {
+                  const label = key.replace('shasi-', '');
+                  return (
+                    <div key={key} className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <div className="text-xs font-semibold text-slate-800">{label}</div>
+                      <select
+                        value={String((form.paintDamageInfo as any)?.[key] ?? 'yok')}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            paintDamageInfo: { ...(prev.paintDamageInfo as any), [key]: e.target.value }
+                          }))
+                        }
+                        className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-800"
+                      >
+                        <option value="yok">İşlem Yok</option>
+                        <option value="var">İşlem Var</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, paintDamageInfo: buildDefaultKaporta() as any }))}
+                className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Kaportayı Orijinal Yap / Şasiyi İşlem Yok
+              </button>
+            </div>
           </div>
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
