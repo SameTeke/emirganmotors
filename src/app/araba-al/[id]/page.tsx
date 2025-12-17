@@ -185,7 +185,7 @@ export default function ListingDetailPage() {
   return (
     <main className="min-h-screen bg-slate-50 pt-16">
       <Header />
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6 pb-24 md:pb-0">
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
         <div>
           <p className="text-sm text-slate-500 cursor-pointer" onClick={() => router.push('/araba-al')}>
             ← İlanlara dön
@@ -306,7 +306,7 @@ export default function ListingDetailPage() {
 
           {/* Sağ CTA */}
           <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:sticky md:top-24">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-sm text-slate-600">Bu ilan hakkında</div>
               <div className="mt-1 text-lg font-semibold text-slate-900">Hemen iletişime geçin</div>
               <div className="mt-4 flex flex-col gap-2">
@@ -335,28 +335,6 @@ export default function ListingDetailPage() {
         </div>
       </div>
       <Footer />
-
-      {/* Mobil sabit iletişim barı */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
-        <div className="mx-auto flex max-w-6xl gap-2 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => {
-              setCallStatus(null);
-              setCallOpen(true);
-            }}
-            className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg"
-          >
-            Sizi Arayalım
-          </button>
-          <a
-            href={CALL_PHONE_TEL}
-            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-slate-800 shadow-sm text-center"
-          >
-            Hemen Ara
-          </a>
-        </div>
-      </div>
 
       {/* Sizi Arayalım Modal */}
       {callOpen ? (
