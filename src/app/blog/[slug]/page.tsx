@@ -31,19 +31,27 @@ type Params = {
 export default function BlogDetailPage({ params }: Params) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await fetch(`/api/blog/${params.slug}`);
-      if (!res.ok) {
+      setLoadError(null);
+      try {
+        const res = await fetch(`/api/blog/${params.slug}`);
+        if (!res.ok) {
+          setPost(null);
+          setLoadError('Yazı yüklenemedi.');
+          return;
+        }
+        const data = await res.json();
+        setPost(data.post || null);
+      } catch {
         setPost(null);
+        setLoadError('Yazı yüklenemedi.');
+      } finally {
         setLoading(false);
-        return;
       }
-      const data = await res.json();
-      setPost(data.post || null);
-      setLoading(false);
     };
     load();
   }, [params.slug]);
@@ -54,6 +62,25 @@ export default function BlogDetailPage({ params }: Params) {
         <Header />
         <div className="mx-auto max-w-screen-md px-4 py-16 text-center sm:px-6 lg:px-8">
           <p className="text-sm text-slate-600">Yükleniyor...</p>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen bg-white pt-16 sm:pt-20">
+        <Header />
+        <div className="mx-auto max-w-screen-md px-4 py-16 text-center sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold text-slate-900">Yüklenemedi</h1>
+          <p className="mt-2 text-sm text-slate-600">{loadError}</p>
+          <Link
+            href="/blog"
+            className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Bloga dön
+          </Link>
         </div>
         <Footer />
       </main>

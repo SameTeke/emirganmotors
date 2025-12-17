@@ -16,7 +16,7 @@ async function main() {
 
   console.log('Seeded admin user:', email);
 
-  // Örnek ilanlar
+  // Örnek ilanlar (Sadece istenirse: SEED_LISTINGS=1)
   const samples = [
       {
         brand: 'BMW',
@@ -304,50 +304,53 @@ async function main() {
     });
   }
 
-  async function createListings(count) {
-    const existingCount = await prisma.listing.count();
-    const start = existingCount % samples.length;
-    for (let i = 0; i < count; i++) {
-      const s = samples[(start + i) % samples.length];
-      const created = await prisma.listing.create({
-        data: {
-          brand: s.brand,
-          model: s.model,
-          price: s.price,
-          year: s.year,
-          city: s.city,
-          fuelType: s.fuelType,
-          transmission: s.transmission,
-          mileage: s.mileage,
-          bodyType: s.bodyType,
-          color: s.color,
-          paintDamageInfo: s.paintDamageInfo,
-          replacedParts: s.replacedParts,
-          tramerHasRecord: s.tramerHasRecord,
-          tramerAmount: s.tramerAmount ?? undefined,
-          heavyDamage: s.heavyDamage,
-          status: s.status,
-          images: {
-            create: s.images.map((url) => ({ url }))
+  // İlan seed'i (prod deploy sırasında istemiyoruz)
+  if (process.env.SEED_LISTINGS === '1') {
+    async function createListings(count) {
+      const existingCount = await prisma.listing.count();
+      const start = existingCount % samples.length;
+      for (let i = 0; i < count; i++) {
+        const s = samples[(start + i) % samples.length];
+        const created = await prisma.listing.create({
+          data: {
+            brand: s.brand,
+            model: s.model,
+            price: s.price,
+            year: s.year,
+            city: s.city,
+            fuelType: s.fuelType,
+            transmission: s.transmission,
+            mileage: s.mileage,
+            bodyType: s.bodyType,
+            color: s.color,
+            paintDamageInfo: s.paintDamageInfo,
+            replacedParts: s.replacedParts,
+            tramerHasRecord: s.tramerHasRecord,
+            tramerAmount: s.tramerAmount ?? undefined,
+            heavyDamage: s.heavyDamage,
+            status: s.status,
+            images: {
+              create: s.images.map((url) => ({ url }))
+            }
           }
-        }
-      });
-      console.log('Seeded listing:', created.id, `${s.brand} ${s.model}`);
+        });
+        console.log('Seeded listing:', created.id, `${s.brand} ${s.model}`);
+      }
     }
-  }
 
-  // Mod 1: DB boşsa/azsa toplamı 5'e tamamla
-  const existingCount = await prisma.listing.count();
-  const target = 5;
-  const toFill = Math.max(0, target - existingCount);
-  if (toFill > 0) {
-    await createListings(toFill);
-  }
+    // Mod 1: DB boşsa/azsa toplamı 5'e tamamla
+    const existingCount = await prisma.listing.count();
+    const target = 5;
+    const toFill = Math.max(0, target - existingCount);
+    if (toFill > 0) {
+      await createListings(toFill);
+    }
 
-  // Mod 2: İstenirse ekstra ilan ekle (örn: SEED_ADD_LISTINGS=5)
-  const addCount = Number(process.env.SEED_ADD_LISTINGS || 0);
-  if (addCount > 0) {
-    await createListings(addCount);
+    // Mod 2: İstenirse ekstra ilan ekle (örn: SEED_ADD_LISTINGS=5)
+    const addCount = Number(process.env.SEED_ADD_LISTINGS || 0);
+    if (addCount > 0) {
+      await createListings(addCount);
+    }
   }
 }
 

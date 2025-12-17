@@ -65,13 +65,26 @@ export default function AdminBlogPage() {
   const [tab, setTab] = useState<'icerik' | 'gorseller'>('icerik');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const res = await fetch('/api/admin/blog');
-    const data = await res.json();
-    setPosts(data.posts || []);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const res = await fetch('/api/admin/blog');
+      if (!res.ok) {
+        setPosts([]);
+        setLoadError('Blog yazıları yüklenemedi.');
+        return;
+      }
+      const data = await res.json();
+      setPosts(data.posts || []);
+    } catch {
+      setPosts([]);
+      setLoadError('Blog yazıları yüklenemedi.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -235,6 +248,8 @@ export default function AdminBlogPage() {
         <div className="max-h-[calc(100vh-230px)] overflow-auto">
           {loading ? (
             <div className="p-4 text-sm text-slate-600">Yükleniyor...</div>
+          ) : loadError ? (
+            <div className="p-4 text-sm font-semibold text-red-600">{loadError}</div>
           ) : filtered.length === 0 ? (
             <div className="p-4 text-sm text-slate-600">Kayıt bulunamadı.</div>
           ) : (

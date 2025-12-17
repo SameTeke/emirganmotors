@@ -29,14 +29,27 @@ export default function BlogPage() {
   const [query, setQuery] = useState('');
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await fetch('/api/blog');
-      const data = await res.json();
-      setPosts(data.posts || []);
-      setLoading(false);
+      setLoadError(null);
+      try {
+        const res = await fetch('/api/blog');
+        if (!res.ok) {
+          setPosts([]);
+          setLoadError('Blog yazıları yüklenemedi.');
+          return;
+        }
+        const data = await res.json();
+        setPosts(data.posts || []);
+      } catch {
+        setPosts([]);
+        setLoadError('Blog yazıları yüklenemedi.');
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -77,6 +90,8 @@ export default function BlogPage() {
             <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3">
               {loading ? (
                 <p className="text-sm text-slate-600">Yükleniyor...</p>
+              ) : loadError ? (
+                <p className="text-sm font-semibold text-red-600">{loadError}</p>
               ) : filteredPosts.length === 0 ? (
                 <p className="text-sm text-slate-600">Yazı bulunamadı.</p>
               ) : (
