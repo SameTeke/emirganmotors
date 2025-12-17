@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 const cards = [
   { title: 'İlanlar', desc: 'Araba ilanlarını yönet', href: '/admin/listings' },
+  { title: 'Blog Yazıları', desc: 'Blog yazılarını yönet', href: '/admin/blog' },
   { title: 'Form Başvuruları', desc: 'Form başvurularını incele', href: '/admin/forms' }
 ];
 

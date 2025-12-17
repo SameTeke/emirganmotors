@@ -2,79 +2,44 @@
 "use client";
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-const posts = [
-  {
-    id: 1,
-    title: 'Sent Ayarı Nedir, Nasıl Yapılır?',
-    slug: 'sent-ayari-nedir-nasil-yapilir',
-    date: '12 Ağustos 2024',
-    readingTime: '4 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 2,
-    title: 'En İyi 125 CC Motosiklet Modelleri',
-    slug: 'en-iyi-125cc-motosiklet-modelleri',
-    date: '10 Ağustos 2024',
-    readingTime: '5 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 3,
-    title: 'Doğru Lastik Seçimi ile Yakıt Tüketimini Azaltmanın Yolları',
-    slug: 'dogru-lastik-secimi-ile-yakit-tuketimini-azaltma',
-    date: '08 Ağustos 2024',
-    readingTime: '6 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 4,
-    title: 'Uzun Yolda Araç Bakım Kontrol Listesi',
-    slug: 'uzun-yolda-arac-bakim-kontrol-listesi',
-    date: '05 Ağustos 2024',
-    readingTime: '5 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 5,
-    title: 'Şehir İçi Sürüşte Yakıt Tasarrufu İpuçları',
-    slug: 'sehir-ici-suruste-yakit-tasarrufu-ipuclari',
-    date: '03 Ağustos 2024',
-    readingTime: '4 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 6,
-    title: 'Araç Değer Kaybını Önlemenin 7 Yolu',
-    slug: 'arac-deger-kaybini-onlemenin-7-yolu',
-    date: '01 Ağustos 2024',
-    readingTime: '5 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 7,
-    title: 'Kış Lastiği Ne Zaman Takılır?',
-    slug: 'kis-lastigi-ne-zaman-takilir',
-    date: '29 Temmuz 2024',
-    readingTime: '3 dk',
-    imageUrl: '/images/banner.jpg'
-  },
-  {
-    id: 8,
-    title: 'İkinci El Araç Alırken Ekspertiz Kontrolü',
-    slug: 'ikinci-el-arac-alirken-ekspertiz-kontrolu',
-    date: '25 Temmuz 2024',
-    readingTime: '6 dk',
-    imageUrl: '/images/banner.jpg'
-  }
-];
+type BlogPost = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  thumbnailUrl: string | null;
+  heroImageUrl: string | null;
+  readingTime: string | null;
+  publishedAt: string | null;
+};
+
+const formatDateTR = (iso: string | null) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+};
 
 export default function BlogPage() {
   const [query, setQuery] = useState('');
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const res = await fetch('/api/blog');
+      const data = await res.json();
+      setPosts(data.posts || []);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const filteredPosts = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -110,14 +75,19 @@ export default function BlogPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3">
-              {filteredPosts.map((post) => (
+              {loading ? (
+                <p className="text-sm text-slate-600">Yükleniyor...</p>
+              ) : filteredPosts.length === 0 ? (
+                <p className="text-sm text-slate-600">Yazı bulunamadı.</p>
+              ) : (
+                filteredPosts.map((post) => (
                 <article
                   key={post.id}
                   className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
                   <Link href={`/blog/${post.slug}`} className="relative block h-32 w-full sm:h-44">
                     <img
-                      src={post.imageUrl}
+                      src={post.thumbnailUrl || post.heroImageUrl || '/images/banner.jpg'}
                       alt={post.title}
                       className="h-full w-full object-cover"
                     />
@@ -126,7 +96,7 @@ export default function BlogPage() {
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     <h3 className="text-base font-semibold text-slate-900 line-clamp-2">{post.title}</h3>
                     <p className="text-xs font-medium text-slate-500">
-                      {post.date} · {post.readingTime}
+                      {formatDateTR(post.publishedAt)} {post.readingTime ? `· ${post.readingTime}` : ''}
                     </p>
                     <Link
                       href={`/blog/${post.slug}`}
@@ -136,7 +106,8 @@ export default function BlogPage() {
                     </Link>
                   </div>
                 </article>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 const navItems = [
   { href: '/admin', label: 'Kontrol Paneli' },
   { href: '/admin/listings', label: 'İlanlar' },
+  { href: '/admin/blog', label: 'Blog Yazıları' },
   { href: '/admin/forms', label: 'Form Başvuruları' }
 ];
 

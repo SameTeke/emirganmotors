@@ -210,6 +210,100 @@ async function main() {
       }
     ];
 
+  // Blog yazıları (ilk kurulum)
+  const blogSamples = [
+    {
+      title: 'Sent Ayarı Nedir, Nasıl Yapılır?',
+      slug: 'sent-ayari-nedir-nasil-yapilir',
+      readingTime: '4 dk',
+      publishedAt: '2024-08-12',
+      excerpt: 'Sent ayarı nedir, nasıl yapılır ve sürüşe etkisi nedir? Temel ipuçları ve kontrol listesi.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nSent ayarı; motosiklet zincirinin gerginliğini ifade eder. Doğru gerginlik, güvenli sürüş ve parça ömrü için önemlidir.\n\nKontrol aralığı, gerginlik ölçümü ve sıkma torkları üretici önerilerine göre yapılmalıdır.'
+    },
+    {
+      title: 'En İyi 125 CC Motosiklet Modelleri',
+      slug: 'en-iyi-125cc-motosiklet-modelleri',
+      readingTime: '5 dk',
+      publishedAt: '2024-08-10',
+      excerpt: 'Şehir içi kullanımda öne çıkan 125cc modeller, artıları ve dikkat edilmesi gerekenler.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\n125cc sınıfı; yakıt ekonomisi ve kullanım kolaylığıyla popülerdir.\n\nSeçim yaparken servis ağı, yedek parça maliyeti ve ikinci el değeri gibi kriterleri değerlendirin.'
+    },
+    {
+      title: 'Doğru Lastik Seçimi ile Yakıt Tüketimini Azaltmanın Yolları',
+      slug: 'dogru-lastik-secimi-ile-yakit-tuketimini-azaltma',
+      readingTime: '6 dk',
+      publishedAt: '2024-08-08',
+      excerpt: 'Doğru lastik basıncı ve lastik seçimi yakıt tüketimini doğrudan etkiler. Pratik öneriler.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nYanlış basınç yuvarlanma direncini artırır.\n\nLastik ebatı, desen ve bileşik seçimi kullanım senaryonuza uygun olmalıdır.'
+    },
+    {
+      title: 'Uzun Yolda Araç Bakım Kontrol Listesi',
+      slug: 'uzun-yolda-arac-bakim-kontrol-listesi',
+      readingTime: '5 dk',
+      publishedAt: '2024-08-05',
+      excerpt: 'Uzun yol öncesi kontrol edilmesi gereken temel noktalar: sıvılar, lastikler, frenler ve aydınlatma.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nMotor yağı, soğutma suyu, fren hidroliği ve silecek suyu seviyelerini kontrol edin.\n\nLastik diş derinliği ve basınç değerlerini üretici tavsiyesine göre ayarlayın.'
+    },
+    {
+      title: 'Şehir İçi Sürüşte Yakıt Tasarrufu İpuçları',
+      slug: 'sehir-ici-suruste-yakit-tasarrufu-ipuclari',
+      readingTime: '4 dk',
+      publishedAt: '2024-08-03',
+      excerpt: 'Şehir içi trafikte yakıt tasarrufu için hızlanma, dur-kalk, klima ve lastik basıncı önerileri.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nAni hızlanma ve sert fren yakıt tüketimini artırır.\n\nRölantide beklemek yerine, uzun duruşlarda aracı stop etmek avantaj sağlayabilir.'
+    },
+    {
+      title: 'Araç Değer Kaybını Önlemenin 7 Yolu',
+      slug: 'arac-deger-kaybini-onlemenin-7-yolu',
+      readingTime: '5 dk',
+      publishedAt: '2024-08-01',
+      excerpt: 'Bakım kayıtları, doğru ekspertiz, boyasızlık ve doğru satış zamanı gibi değer kaybını azaltan adımlar.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nDüzenli bakım ve belgeli servis geçmişi ikinci elde değer katar.\n\nUfak hasarları büyümeden onarmak ve orijinal parça tercih etmek önemlidir.'
+    },
+    {
+      title: 'Kış Lastiği Ne Zaman Takılır?',
+      slug: 'kis-lastigi-ne-zaman-takilir',
+      readingTime: '3 dk',
+      publishedAt: '2024-07-29',
+      excerpt: 'Kış lastiği takma zamanı, yasal zorunluluklar ve güvenli sürüş için ipuçları.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nHava sıcaklığı 7°C altına düştüğünde kış lastiği performansı artar.\n\nDiş derinliği ve üretim tarihi kontrol edilmeli, lastikler aynı aks üzerinde aynı tip olmalıdır.'
+    },
+    {
+      title: 'İkinci El Araç Alırken Ekspertiz Kontrolü',
+      slug: 'ikinci-el-arac-alirken-ekspertiz-kontrolu',
+      readingTime: '6 dk',
+      publishedAt: '2024-07-25',
+      excerpt: 'İkinci el araç alımında ekspertizde nelere bakılmalı? Kaporta, mekanik ve tramer kontrolü.',
+      content:
+        'Bu yazı admin panelinden düzenlenebilir.\n\nKaporta ölçüm cihazı sonuçları, şasi işlem kontrolü ve boya-değişen durumları kritik veriler sunar.\n\nOBD taraması, motor/şanzıman kontrolü ve test sürüşü yapılmalıdır.'
+    }
+  ];
+
+  for (const p of blogSamples) {
+    await prisma.blogPost.upsert({
+      where: { slug: p.slug },
+      update: {},
+      create: {
+        title: p.title,
+        slug: p.slug,
+        excerpt: p.excerpt,
+        content: p.content,
+        thumbnailUrl: '/images/banner.jpg',
+        heroImageUrl: '/images/banner.jpg',
+        readingTime: p.readingTime,
+        status: 'published',
+        publishedAt: new Date(p.publishedAt)
+      }
+    });
+  }
+
   async function createListings(count) {
     const existingCount = await prisma.listing.count();
     const start = existingCount % samples.length;
