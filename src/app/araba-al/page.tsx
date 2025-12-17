@@ -49,8 +49,44 @@ function ArabaAlInner() {
     listingNo: ''
   });
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const [mobileFiltersMounted, setMobileFiltersMounted] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const searchParams = useSearchParams();
+
+  const openMobileFilters = () => {
+    setShowFiltersMobile(true);
+    setMobileFiltersMounted(true);
+    // mount sonrası animasyonun çalışması için bir frame bekle
+    requestAnimationFrame(() => setMobileFiltersOpen(true));
+  };
+
+  const closeMobileFilters = () => {
+    setMobileFiltersOpen(false);
+    setShowFiltersMobile(false);
+    // kapanış animasyonu bitsin diye biraz bekle
+    window.setTimeout(() => setMobileFiltersMounted(false), 220);
+  };
+
+  // Mobil filtre açıkken body scroll'u kilitle
+  useEffect(() => {
+    if (!mobileFiltersMounted) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileFiltersMounted]);
+
+  // ESC ile kapat
+  useEffect(() => {
+    if (!mobileFiltersMounted) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMobileFilters();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mobileFiltersMounted]);
 
   useEffect(() => {
     const load = async () => {
@@ -186,30 +222,51 @@ function ArabaAlInner() {
             <div className="text-sm font-semibold text-slate-900">Filtreler</div>
             <button
               type="button"
-              onClick={() => setShowFiltersMobile(true)}
+              onClick={openMobileFilters}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm"
             >
               <span>Filtreleri Aç</span>
             </button>
           </div>
 
-          {showFiltersMobile && (
-            <div className="fixed inset-0 z-30 bg-black/40 px-4 py-6 lg:hidden" onClick={() => setShowFiltersMobile(false)}>
+          {/* Mobil filtre drawer (sağdan açılır) */}
+          {mobileFiltersMounted && (
+            <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+              <button
+                type="button"
+                aria-label="Filtreyi kapat"
+                className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${mobileFiltersOpen ? 'opacity-100' : 'opacity-0'}`}
+                onClick={closeMobileFilters}
+              />
+
               <div
-                className="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow-2xl"
+                className={`absolute inset-y-0 right-0 w-[92vw] max-w-sm bg-white shadow-2xl transition-transform duration-200 ease-out ${
+                  mobileFiltersOpen ? 'translate-x-0' : 'translate-x-full'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="text-sm font-semibold text-slate-900">Filtrele</div>
+                {/* Header */}
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
                   <button
                     type="button"
-                    onClick={() => setShowFiltersMobile(false)}
-                    className="text-sm font-semibold text-slate-600"
+                    onClick={closeMobileFilters}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Geri
+                  </button>
+                  <div className="text-sm font-semibold text-slate-900">Filtreler</div>
+                  <button
+                    type="button"
+                    onClick={closeMobileFilters}
+                    className="rounded-lg px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    aria-label="Kapat"
                   >
                     Kapat
                   </button>
                 </div>
-                <div className="max-h-[70vh] overflow-y-auto">
+
+                {/* Content: sadece burası scroll */}
+                <div className="h-[calc(100vh-112px)] overflow-y-auto px-4 py-4">
                   <div className="space-y-4 text-sm text-slate-800">
                     <div className="space-y-2">
                       <div className="font-semibold text-slate-900">İlan No</div>
@@ -395,7 +452,12 @@ function ArabaAlInner() {
                         </label>
                       </div>
                     </div>
+                  </div>
+                </div>
 
+                {/* Footer actions */}
+                <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-white px-4 py-3">
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() =>
@@ -417,9 +479,16 @@ function ArabaAlInner() {
                           listingNo: ''
                         })
                       }
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
-                      Filtreyi Temizle
+                      Temizle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeMobileFilters}
+                      className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm"
+                    >
+                      Uygula
                     </button>
                   </div>
                 </div>
