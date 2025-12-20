@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import LatestListingsStrip from '@/components/home/LatestListingsStrip';
 import { getBrandsByYear } from '@/data/cars/getBrandsByYear';
 import { getModelsByBrand } from '@/data/cars/getModelsByBrand';
 import { getMotoBrandsByYear } from '@/data/motos/getMotoBrandsByYear';
@@ -402,6 +403,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* En Yeni Fırsat Arabalar */}
+      <LatestListingsStrip />
 
       {/* Özellikler */}
       <section className="bg-white" data-reveal>
