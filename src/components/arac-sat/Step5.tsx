@@ -64,7 +64,7 @@ export default function Step5({ value, errors, onChange, onPrev, onValidate, off
       });
       const data = await res.json();
       if (data.success) {
-        setStatus('Kod gönderildi (geliştirme: konsolu kontrol edin)');
+        setStatus('Kod gönderildi');
         setIsModalOpen(true);
       } else {
         setStatus(data.error || 'SMS gönderilemedi');
@@ -83,7 +83,7 @@ export default function Step5({ value, errors, onChange, onPrev, onValidate, off
       const res = await fetch('/api/verify-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ phone: value.phone, code })
       });
       const data = await res.json();
       if (data.success) {

@@ -103,3 +103,18 @@ model FormSubmission {
   updatedAt DateTime         @updatedAt
 }
 
+model SmsOtp {
+  id         Int       @id @default(autoincrement())
+  phone      String
+  codeHash   String
+  salt       String
+  attempts   Int       @default(0)
+  verifiedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([phone, createdAt])
+  @@index([expiresAt])
+}
+
